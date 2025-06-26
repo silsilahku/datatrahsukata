@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Trah Sukata</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #aaa; padding: 8px; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h1>Data Trah Sukata</h1>
+  <div id="data-container">Memuat data...</div>
+
+  <script>
+    fetch('https://script.google.com/macros/s/AKfycbyZZl2h8OBb2buS5Qv-3oumCNtC4e9xGHGRa0A6jGJ3Dq6BU8U5QblYnK7nRBz-_WNhVQ/exec')
+      .then(response => response.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          let html = '<table><thead><tr>';
+          // Ambil nama kolom dari objek pertama
+          const columns = Object.keys(data[0]);
+          columns.forEach(col => html += `<th>${col}</th>`);
+          html += '</tr></thead><tbody>';
+          data.forEach(row => {
+            html += '<tr>';
+            columns.forEach(col => html += `<td>${row[col]}</td>`);
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+          document.getElementById('data-container').innerHTML = html;
+        } else {
+          document.getElementById('data-container').textContent = 'Format data tidak dikenali.';
+        }
+      })
+      .catch(err => {
+        document.getElementById('data-container').textContent = 'Gagal mengambil data.';
+        console.error(err);
+      });
+  </script>
+</body>
+</html>
