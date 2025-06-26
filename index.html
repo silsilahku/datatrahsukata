@@ -4,9 +4,35 @@
   <meta charset="UTF-8">
   <title>Data Trah Sukata</title>
   <style>
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #aaa; padding: 8px; }
-    th { background: #eee; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fff8;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: #ffffff;
+    }
+    th {
+      background: #c9f7c1; /* hijau muda */
+      color: #275d22;
+      border: 1px solid #b7e6ae;
+      padding: 10px 8px;
+    }
+    td {
+      border: 1px solid #b7e6ae;
+      padding: 8px;
+      color: #275d22;
+    }
+    tr:nth-child(even) {
+      background: #ecffe6; /* hijau sangat muda */
+    }
+    tr:nth-child(odd) {
+      background: #f6fff2; /* sedikit lebih terang */
+    }
+    h1 {
+      color: #388e3c;
+    }
   </style>
 </head>
 <body>
@@ -19,7 +45,6 @@
       .then(data => {
         if (Array.isArray(data)) {
           let html = '<table><thead><tr>';
-          // Ambil nama kolom dari objek pertama
           const columns = Object.keys(data[0]);
           columns.forEach(col => html += `<th>${col}</th>`);
           html += '</tr></thead><tbody>';
