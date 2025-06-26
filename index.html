@@ -2,65 +2,206 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Data Trah Sukata</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f8fff8;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      color: #388e3c;
+      font-size: 1.5em;
+      text-align: center;
+      margin: 24px 0 16px 0;
+    }
+    #data-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
     }
     table {
       border-collapse: collapse;
       width: 100%;
+      min-width: 400px;
       background: #ffffff;
+      font-size: 1em;
+      table-layout: auto;
+      position: relative;
     }
-    th {
-      background: #c9f7c1; /* hijau muda */
+    thead th {
+      background: #c9f7c1;
       color: #275d22;
-      border: 1px solid #b7e6ae;
+      border: 1px solid #000;
       padding: 10px 8px;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      white-space: nowrap;
     }
-    td {
-      border: 1px solid #b7e6ae;
+    tbody td {
+      border: 1px solid #000;
       padding: 8px;
       color: #275d22;
+      background-clip: padding-box;
+      white-space: nowrap;
     }
-    tr:nth-child(even) {
-      background: #ecffe6; /* hijau sangat muda */
+    tr:nth-child(even) td {
+      background: #ecffe6;
     }
-    tr:nth-child(odd) {
-      background: #f6fff2; /* sedikit lebih terang */
+    tr:nth-child(odd) td {
+      background: #f6fff2;
     }
-    h1 {
-      color: #388e3c;
+    /* Sticky fixed column ke-2 (index 1 setelah filter) */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      background: #c9f7c1;
+      z-index: 2;
+      white-space: nowrap !important;
+    }
+    thead .sticky-col {
+      z-index: 4;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.1em;
+        margin: 16px 0 8px 0;
+      }
+      table {
+        font-size: 0.95em;
+        min-width: 320px;
+      }
+      th, td {
+        padding: 7px 5px;
+      }
+      #data-container {
+        padding: 4px;
+      }
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      background: #c9f7c1;
+      color: #275d22;
+      border: 1px solid #b7e6ae;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 1em;
+      min-width: 36px;
+      transition: background 0.2s;
+    }
+    .pagination button.active, .pagination button:hover {
+      background: #388e3c;
+      color: #fff;
+      border-color: #388e3c;
+    }
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
   <h1>Data Trah Sukata</h1>
-  <div id="data-container">Memuat data...</div>
-
+  <div id="data-container">
+    <div class="table-responsive">Memuat data...</div>
+  </div>
   <script>
+    const perPage = 10;
+    // Kolom yang dihapus berdasarkan indeks (0-based): 0,10,11,12,13
+    const removedIndices = [0, 10, 11, 12, 13];
+
+    let allData = [];
+    let columns = [];
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function pageData(data, page, perPage) {
+      const start = (page - 1) * perPage;
+      return data.slice(start, start + perPage);
+    }
+
+    function renderTable() {
+      const pagedData = pageData(allData, currentPage, perPage);
+      let html = '<div class="table-responsive"><table><thead><tr>';
+      columns.forEach((col, idx) => {
+        const stickyClass = (idx === 1) ? 'sticky-col' : '';
+        html += `<th class="${stickyClass}">${col}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      pagedData.forEach(row => {
+        html += '<tr>';
+        columns.forEach((col, idx) => {
+          const stickyClass = (idx === 1) ? 'sticky-col' : '';
+          html += `<td class="${stickyClass}">${row[col] ?? ''}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    function renderPagination() {
+      let html = '<div class="pagination">';
+      html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&laquo;</button>`;
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, currentPage + 2);
+      if (currentPage <= 3) end = Math.min(5, totalPages);
+      if (currentPage >= totalPages - 2) start = Math.max(1, totalPages - 4);
+      for (let i = start; i <= end; i++) {
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+      }
+      html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">&raquo;</button>`;
+      html += '</div>';
+      return html;
+    }
+
+    window.changePage = function(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      updateDisplay();
+    };
+
+    function updateDisplay() {
+      document.querySelector('#data-container').innerHTML = renderTable() + renderPagination();
+    }
+
     fetch('https://script.google.com/macros/s/AKfycbyZZl2h8OBb2buS5Qv-3oumCNtC4e9xGHGRa0A6jGJ3Dq6BU8U5QblYnK7nRBz-_WNhVQ/exec')
       .then(response => response.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          let html = '<table><thead><tr>';
-          const columns = Object.keys(data[0]);
-          columns.forEach(col => html += `<th>${col}</th>`);
-          html += '</tr></thead><tbody>';
-          data.forEach(row => {
-            html += '<tr>';
-            columns.forEach(col => html += `<td>${row[col]}</td>`);
-            html += '</tr>';
+        if (Array.isArray(data) && data.length > 0) {
+          const allColumns = Object.keys(data[0]);
+          columns = allColumns.filter((col, idx) => !removedIndices.includes(idx));
+          allData = data.map(row => {
+            let newRow = {};
+            columns.forEach(col => newRow[col] = row[col]);
+            return newRow;
           });
-          html += '</tbody></table>';
-          document.getElementById('data-container').innerHTML = html;
+          totalPages = Math.ceil(allData.length / perPage);
+          currentPage = 1;
+          updateDisplay();
         } else {
-          document.getElementById('data-container').textContent = 'Format data tidak dikenali.';
+          document.querySelector('#data-container').innerHTML = '<div class="table-responsive">Format data tidak dikenali.</div>';
         }
       })
       .catch(err => {
-        document.getElementById('data-container').textContent = 'Gagal mengambil data.';
+        document.querySelector('#data-container').innerHTML = '<div class="table-responsive">Gagal mengambil data.</div>';
         console.error(err);
       });
   </script>
