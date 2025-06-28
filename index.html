@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Data Trah Sukata</title>
+  <title>Data dari Google Apps Script</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,6 +23,19 @@
       margin: 0 auto;
       padding: 8px;
       box-sizing: border-box;
+    }
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .total-info {
+      font-size: 1em;
+      color: #275d22;
+      margin-bottom: 6px;
     }
     .table-responsive {
       width: 100%;
@@ -86,6 +99,11 @@
       #data-container {
         padding: 4px;
       }
+      .controls-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
     }
     .pagination {
       display: flex;
@@ -115,15 +133,25 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .select-per-page {
+      font-size: 1em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #b7e6ae;
+      color: #275d22;
+      background: #ecffe6;
+    }
   </style>
 </head>
 <body>
-  <h1>Data Trah Sukata</h1>
+  <h1>Data dari Google Apps Script</h1>
   <div id="data-container">
     <div class="table-responsive">Memuat data...</div>
   </div>
   <script>
-    const perPage = 10;
+    // Konfigurasi awal
+    let perPage = 10;
+    const perPageOptions = [5, 10, 20, 50, 100];
     // Kolom yang dihapus berdasarkan indeks (0-based): 0,10,11,12,13
     const removedIndices = [0, 10, 11, 12, 13];
 
@@ -135,6 +163,23 @@
     function pageData(data, page, perPage) {
       const start = (page - 1) * perPage;
       return data.slice(start, start + perPage);
+    }
+
+    function renderControlsBar() {
+      return `
+        <div class="controls-bar">
+          <div class="total-info">
+            Total data: <b>${allData.length}</b>
+          </div>
+          <div>
+            Tampilkan 
+            <select class="select-per-page" id="perPageSelect">
+              ${perPageOptions.map(opt => `<option value="${opt}"${opt===perPage?' selected':''}>${opt}</option>`).join('')}
+            </select>
+            baris per halaman
+          </div>
+        </div>
+      `;
     }
 
     function renderTable() {
@@ -158,6 +203,7 @@
     }
 
     function renderPagination() {
+      totalPages = Math.max(1, Math.ceil(allData.length / perPage));
       let html = '<div class="pagination">';
       html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&laquo;</button>`;
       let start = Math.max(1, currentPage - 2);
@@ -176,10 +222,22 @@
       if (page < 1 || page > totalPages) return;
       currentPage = page;
       updateDisplay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     function updateDisplay() {
-      document.querySelector('#data-container').innerHTML = renderTable() + renderPagination();
+      document.querySelector('#data-container').innerHTML =
+        renderControlsBar() + renderTable() + renderPagination();
+      // Listener untuk select per page
+      const select = document.getElementById('perPageSelect');
+      if (select) {
+        select.onchange = function() {
+          perPage = parseInt(this.value, 10);
+          totalPages = Math.max(1, Math.ceil(allData.length / perPage));
+          currentPage = Math.min(currentPage, totalPages);
+          updateDisplay();
+        };
+      }
     }
 
     fetch('https://script.google.com/macros/s/AKfycbyZZl2h8OBb2buS5Qv-3oumCNtC4e9xGHGRa0A6jGJ3Dq6BU8U5QblYnK7nRBz-_WNhVQ/exec')
@@ -193,7 +251,7 @@
             columns.forEach(col => newRow[col] = row[col]);
             return newRow;
           });
-          totalPages = Math.ceil(allData.length / perPage);
+          totalPages = Math.max(1, Math.ceil(allData.length / perPage));
           currentPage = 1;
           updateDisplay();
         } else {
